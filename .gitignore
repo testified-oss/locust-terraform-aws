@@ -1,0 +1,6 @@
+git/mirrors/
+git/wt/
+worktrees/
+.openclaw/
+scratch/
+*.tmp
