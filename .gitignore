@@ -4,3 +4,4 @@ worktrees/
 .openclaw/
 scratch/
 *.tmp
+.worktrees
