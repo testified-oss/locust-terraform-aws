@@ -2,7 +2,7 @@
 
 ## Mandatory skill (all outcomes)
 
-**Every** HEARTBEAT run—**create**, **idle** (open issues + open PRs), or **work on an existing issue**—runs **`HEARTBEAT.md` Sections E / E.2** first ( **`gh` probes only**), then needs a **local clone via mirror + worktree** on disk (**Section D**) before local file reads for scan/implement. Do not rely on `gh` alone to “read” the repo for triage or issue bodies.
+**Every** HEARTBEAT run—**create**, **PR follow-up** (**≥1 open PR** → **Section J**, with or without open issues), or **work on an existing issue**—runs **`HEARTBEAT.md` Sections E then E.2** first ( **`gh` probes only**), then needs a **local clone via mirror + worktree** on disk (**Section D**) before local file reads for scan/implement. Section J may add a **second** worktree on the **PR head branch** (`…-pr-${P}`); remove **all** ephemeral worktrees in **Section H**. Do not rely on `gh` alone to “read” the repo for triage or issue bodies.
 
 Before any `git worktree` / mirror layout change, read and apply:
 
@@ -15,7 +15,7 @@ Announce when applying it: *using-git-worktrees skill governs layout and safety.
 | Path | Purpose |
 |------|---------|
 | `git/mirrors/<owner>__<repo>.git` | Bare mirror (`git clone --mirror`) |
-| `git/wt/<owner>__<repo>-<purpose>` | Ephemeral checkout: `scan` on default branch, or `issue-N` for work-on-issue branches |
+| `git/wt/<owner>__<repo>-<purpose>` | Ephemeral checkout: `scan` on default branch, `issue-N` for work-on-issue branches, or **`pr-P`** for **Section J** (existing PR head `HEAD`) |
 
 **Workspace root:** `/Users/luucrew/.openclaw/workspaces/testified-oss-coder/codespaces/`
 
@@ -55,6 +55,19 @@ git -C "git/mirrors/OWNER__REPO.git" worktree add -b "feat/issue-${N}-triage" ".
 ```
 
 (Adjust branch prefix per **`tools/conventions.md`**.) Implement, commit with conventional messages, then push + `gh pr create --draft` per **`tools/github-prs.md`** (mirror remotes block plain `git push origin <branch>` — use the **URL push** recipe there).
+
+## Worktree — existing PR head (**Section J**)
+
+When **`run_path=pr_followup`**, fetch and check out the **PR’s head branch** (not default branch):
+
+```bash
+P=5
+HEAD=feat/issue-5-ci-matrix   # from gh pr view / list JSON headRefName
+git -C "git/mirrors/OWNER__REPO.git" fetch origin "$HEAD"
+git -C "git/mirrors/OWNER__REPO.git" worktree add "../wt/OWNER__REPO-pr-${P}" "$HEAD"
+```
+
+Implement, commit, then **URL push** to the **same** `$HEAD` branch per **`tools/github-prs.md`**. **Never** `git worktree add -b …` for a new branch here unless you are explicitly abandoning the PR head (not allowed by default).
 
 ## Push caveat (`clone --mirror`)
 

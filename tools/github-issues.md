@@ -3,27 +3,28 @@
 ## Per-HEARTBEAT flow (summary)
 
 1. **Random repo** — exactly one of the two repos in **`tools/target-repos.md`** (see that file for `shuf` recipe). Set **`REPO="OWNER/REPO"`** and use **`--repo "$REPO"`** on every `gh` call (**`HEARTBEAT.md` Section C**).
-2. **Route gate first** — **`HEARTBEAT.md` Section E / E.2** *before* mirror: use **existence probes** (`-L 1`, `jq 'length'` → **0** or **1**) for open issues and (if issues exist) open PRs. **Never** infer “no issues” without this probe.
+2. **Route gate first** — **`HEARTBEAT.md` Section E then E.2** *before* mirror: use **existence probes** (`-L 1`, `jq 'length'` → **0** or **1**) for **open issues** and **open PRs** (E.2 **always** runs). **Never** infer routing without both probes.
 3. **Local copy always** — after routing, mirror + **at least one worktree** on the default branch per **`tools/git-worktrees.md`** and the **using-git-worktrees** skill (**`HEARTBEAT.md` Section D**), **before** `gh issue create` or implementation reads.
 4. **Branch on probes** (see **`HEARTBEAT.md` Routing law**):
-   - **`has_open_issues=0`** → **create** path after D: scan + dedupe + **`HEARTBEAT.md` Section F preflight** + `gh issue create`.
-   - **`has_open_issues≠0`** and **`has_open_prs≠0`** → **idle** after D — **no** `gh issue create`, **no** commits, **no** new PR, **no** issue comment. (With **`-L 1`** probes, “≠0” is exactly **`1`**.)
+   - **`has_open_issues=0`** and **`has_open_prs=0`** → **create** path after D: scan + dedupe + **`HEARTBEAT.md` Section F preflight** + `gh issue create`.
+   - **`has_open_prs≠0`** (issues **0** or **>0**) → **PR follow-up** after D — **`HEARTBEAT.md` Section J** + **`tools/github-prs.md`**: **no** `gh issue create`, **no** `gh pr create`, **no** merge; **yes** triage **checks + comments** on one PR; **commits + push** only on that PR’s head branch when fixing CI/review. (With **`-L 1`** probes, “≠0” is exactly **`1`**.)
 
    - **`has_open_issues≠0`** and **`has_open_prs=0`** → **work on issue** after D — **no** `gh issue create`; pick an issue, **`gh issue view`**, **second worktree** on a **topic branch** per **`tools/conventions.md`** / **`HEARTBEAT.md` Section G**, implement, **commit**, **`gh pr create --draft`** when there is at least one commit, then **`gh issue comment`** linking the PR—never merge without human approval.
 
-**Anti-footgun:** **`gh issue list` / `gh pr list` must include `-L 1`** for these existence probes. Without it, `jq 'length'` is the **real** count (2, 3, …). Branching that only treats **`== 1`** as “has issues” then **skips** open‑PR checks and **`gh issue create`** fires by mistake.
+**Anti-footgun:** **`gh issue list` / `gh pr list` must include `-L 1`** for these existence probes. Without it, `jq 'length'` is the **real** count (2, 3, …). Treat **any `length` > 0** as “has at least one” for routing. **Always** run the PR probe (E.2); skipping it when **`has_open_issues=0`** caused **open PRs** to be ignored and **`gh issue create`** to run while a PR still needed triage.
 
 ## Config (edit for your org)
 
 **Current values:**
 
-- **`issue_template_title`:** `Bug report` — must match a template **`name:`** on the repo; **verify** per operator section below.
+- **`issue_template_title`:**  must match conventional commit **`name:`** on the repo; **verify** per operator section below. Refer to [`conventions.md`](conventions.md) for any copy that suggests titles and commits.
+
 - **`max_issues_per_run`:** `1` (one heartbeat = one repo; at most one new issue when the create path runs)
 - **`dedupe_search_limit`:** `20`
 
 | Key | Example | Meaning |
 |-----|---------|---------|
-| `issue_template_title` | `Bug report` | Template **`name:`** for **`gh issue create --template`** |
+| `issue_template_title` | conventional style | Template **`name:`** for **`gh issue create --template`** |
 | `max_issues_per_run` | `1` | Cap **new** issues created when the “no open issues” path runs |
 
 ## Canonical probes (existence: 0 or 1)
@@ -36,11 +37,11 @@ has_open_prs=$(gh pr list --repo "$REPO" --state open -L 1 --json number --jq 'l
 ```
 
 - **`has_open_issues`:** **`0`** = no open issues; **`1`** (with **`-L 1`**) = one or more open issues. If you omitted **`-L 1`**, normalize: **any value `> 0`** means “has open issues” (same as **`1`** in the routing table).
-- **`has_open_prs`:** only interpret when **`has_open_issues` is not `0`** — **`0`** = work-on-issue path; **non‑zero** = idle path (with **`-L 1`**, non‑zero is exactly **`1`**).
+- **`has_open_prs`:** **`0`** = no open PRs; **non‑zero** = at least one open PR → **Section J** (with **`-L 1`**, non‑zero is exactly **`1`**). Routing: **J** if PRs≠**0**; **G** only when issues≠**0** and PRs=**0**; **F** only when issues=**0** and PRs=**0**.
 
 Log both variables and the exact commands to **`memory/YYYY-MM-DD.md`** every run.
 
-## Create path (no open issues)
+## Create path (no open issues **and** no open PRs)
 
 1. Scan files per **`tools/scan-paths.md`** inside the **default-branch worktree** (local copy required).
 2. Dedupe: `gh issue list --repo "$REPO" --state all --search "<keywords>" -L 20` if you need to avoid reopening closed dupes.
@@ -48,7 +49,7 @@ Log both variables and the exact commands to **`memory/YYYY-MM-DD.md`** every ru
 
 ## Work-on-issue path (`has_open_issues` **≠ 0** and **`has_open_prs=0`**)
 
-**Precondition:** **`has_open_prs`** from the probe above must be **`0`**. Otherwise **idle**, not this section.
+**Precondition:** **`has_open_prs`** from the probe above must be **`0`**. Otherwise **Section J** (PR follow-up), not this section.
 
 1. List: `gh issue list --repo "$REPO" --state open --json number,title,labels -L 30`
 2. **Pick one** issue `N` (document choice in memory).
@@ -100,3 +101,9 @@ On **`testified-oss/behave-bdd-python`** and **`testified-oss/awesome-testing-re
 
 1. `gh api "repos/OWNER/REPO/contents/.github/ISSUE_TEMPLATE" --jq '.[].name'` (or GitHub UI **Issues → New issue**).
 2. Align **`issue_template_title`** with the real **`name:`** string (may differ per repo—if so, document both in this file or pick a template name common to both).
+
+
+## Rules (do not duplicate)
+
+- Branch names: see [`conventions.md`](conventions.md).
+- **Every** commit message and Issue title: [`conventions.md`](conventions.md) only.

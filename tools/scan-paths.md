@@ -2,13 +2,14 @@
 
 After a worktree is checked out, Analyse 
 
-1. `README.md` for repository purpose or todos
-2. project directory path and files, cloned repository
-
+- project directory path and files, cloned worktree repository
+- Analyse `README.md` for repository purposes and understanding
 
 ## Output expectation
 
-Summarize: 
+Act as a senior qa engineer, identify 1 of the below based in order of priority
 
-identify if missing relelvant ci (minimum lint and test)
-or analysis project purpose and determine next step to improve
+- security scan
+- missing github action/ci (minimum lint and test) or action build errors
+- project enhancements/improvements purpose gaps
+
