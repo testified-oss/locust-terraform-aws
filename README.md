@@ -17,6 +17,9 @@ A curated collection of websites for practicing software testing skills. This re
 - [Mobile Testing](#mobile-testing)
 - [Accessibility Testing](#accessibility-testing)
 - [Performance Testing](#performance-testing)
+- [CI/CD Testing](#cicd-testing)
+- [Visual Regression Testing](#visual-regression-testing)
+- [Load Testing](#load-testing)
 
 ## General Practice Testing
 
@@ -40,12 +43,12 @@ A curated collection of websites for practicing software testing skills. This re
 * [Black Box Puzzles](http://blackboxpuzzles.workroomprds.com/) - Challenges to help you with exploratory testing.
 * [ToDo List](http://todomvc.com/) - A todo list app with bugs.
 * [Presta Shop](https://demo.prestashop.com/) - An e-commerce site for testing purposes.
-* [Polymer Shop](https://shop.polymer-project.org/) - An e-commerce site for testing purposes.
+- [Polymer Shop](https://shop.polymer-project.org/) - An e-commerce site for testing purposes.
 * [Magento](https://magento.softwaretestingboard.com/) - A demo store for testing automation scripts.
-* [UI5 Demo Kit](https://sapui5.hana.ondemand.com/) - Demo apps for SAPUI5 features and controls.
-* [Real World Example Apps](https://github.com/gothinkster/realworld) - The mother of all demo apps built using different libraries and frameworks.
-* [Evil Tester: Practice Applications](https://eviltester.github.io/TestingApp/) - Applications and example pages for practicing Automation, Software Testing, Web Automating, Exploratory Testing, and JavaScript Hacking.
-* [BookCart](https://bookcart.azurewebsites.net/) - E-commerce bookstore
+- [UI5 Demo Kit](https://sapui5.hana.ondemand.com/) - Demo apps for SAPUI5 features and controls.
+- [Real World Example Apps](https://github.com/gothinkster/realworld) - The mother of all demo apps built using different libraries and frameworks.
+- [Evil Tester: Practice Applications](https://eviltester.github.io/TestingApp/) - Applications and example pages for practicing Automation, Software Testing, Web Automating, Exploratory Testing, and JavaScript Hacking.
+- [BookCart](https://bookcart.azurewebsites.net/) - E-commerce bookstore
 
 ## API Testing
 
@@ -61,13 +64,13 @@ A curated collection of websites for practicing software testing skills. This re
 * [ReqRes](https://reqres.in/) - A hosted REST-API ready to respond to your AJAX requests.
 * [The Open Movie Database](https://www.omdbapi.com/) - A RESTful web service to obtain movie information.
 * [REST test test](https://resttesttest.com/) - A native in-browser tool for testing REST/CORS services.
-* [Poké API](https://pokeapi.co/) - All the Pokémon data accessible through a modern RESTful API.
-* [Public API's](https://github.com/public-apis/public-apis) - An extensive list of public APIs from many domains.
-* [Rick and Morty API](https://rickandmortyapi.com/graphql) - Graphql API for Rick and Morty data.
-* [Go REST](https://gorest.co.in/) - GraphQL and REST API for Testing and Prototyping.
-* [Grafana k6 REST and WS Play](https://test-api.k6.io/) - Collection of HTTP and WebSocket APIs for experimentation with k6.
-* [Airport Gap](https://airportgap.dev-tester.com/) - An API to fetch and save information about airports.
-* [Automation Exercise](https://automationexercise.com/api_list) - APIs List for practice.
+- [Poké API](https://pokeapi.co/) - All the Pokémon data accessible through a modern RESTful API.
+- [Public API's](https://github.com/public-apis/public-apis) - An extensive list of public APIs from many domains.
+- [Rick and Morty API](https://rickandmortyapi.com/graphql) - Graphql API for Rick and Morty data.
+- [Go REST](https://gorest.co.in/) - GraphQL and REST API for Testing and Prototyping.
+- [Grafana k6 REST and WS Play](https://test-api.k6.io/) - Collection of HTTP and WebSocket APIs for experimentation with k6.
+- [Airport Gap](https://airportgap.dev-tester.com/) - An API to fetch and save information about airports.
+- [Automation Exercise](https://automationexercise.com/api_list) - APIs List for practice.
 * [httpbin](https://httpbin.org/) - A simple HTTP Request & Response Service.
 * [Swagger Petstore](https://petstore.swagger.io/) - API with Swagger UI front end.
 * [Countries GraphQL](https://countries.trevorblades.com/) - Graphql API to interact with country data.
@@ -146,10 +149,35 @@ A curated collection of websites for practicing software testing skills. This re
 * [The k6 Fake eShop](https://ecommerce.test.k6.io/) - An eShop for k6 performance testing.
 * [QuickPizza](https://github.com/grafana/quickpizza) - A web application that generates new pizza combinations for performance testing.
 
+## CI/CD Testing
+
+* [Jenkins](https://jenkins.io/) - Open-source automation server for continuous integration and delivery.
+* [GitLab CI](https://docs.gitlab.com/ee/ci/) - Integrated CI/CD within GitLab.
+* [GitHub Actions](https://github.com/features/actions) - CI/CD workflows directly from GitHub.
+* [CircleCI](https://circleci.com/) - Cloud-native CI/CD platform.
+* [Travis CI](https://travis-ci.org/) - Continuous integration for open source and private projects.
+
+## Visual Regression Testing
+
+* [Percy](https://percy.io/) - Visual testing and monitoring for every website and application.
+* [BackstopJS](https://github.com/garris/BackstopJS) - Automated visual regression testing for responsive websites.
+* [Chromatic](https://chromatic.com/) - Visual regression testing for Storybook components.
+* [Percy-playwright](https://github.com/percy/playwright) - Percy integration with Playwright.
+* [Applitools Eyes](https://applitools.com/eyes-sdk) - Visual AI testing for web and mobile apps.
+
+## Load Testing
+
+* [k6](https://k6.io/) - Modern load testing tool developer-friendly and scriptable in JavaScript.
+* [JMeter](https://jmeter.apache.org/) - Industry-standard load testing tool.
+* [Locust](https://locust.io/) - Scalable user load testing with Python code.
+* [Gatling](https://gatling.io/) - High-performance load testing tool.
+* [Artillery](https://artillery.io/) - Modern load testing toolkit.
+* [wrk](https://github.com/wg/wrk) - Modern HTTP benchmarking tools.
+
 ## Contributing
 
 Found a great testing website not listed here? Please submit a pull request or open an issue to suggest additions to this list.
 
 ## License
 
-This awesome list is available under the [MIT License](LICENSE). 
+This awesome list is available under the [MIT License](LICENSE).
