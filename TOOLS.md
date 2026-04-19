@@ -4,7 +4,7 @@
 
 ## Mission (one line)
 
-Each HEARTBEAT: **randomly choose one** of [behave-bdd-python](https://github.com/testified-oss/behave-bdd-python) or [awesome-testing-resources](https://github.com/testified-oss/awesome-testing-resources); **always** use **mirror + worktree** (using-git-worktrees skill); if **no open issues** → create a new issue from local scan; if **open issues and open PRs** → **idle** (no repo writes); if **open issues and no open PRs** → **work on one** issue (draft PR + comment). See **`HEARTBEAT.md`** **Routing law**.
+Each HEARTBEAT: **randomly choose one** repo from the pool; set **`REPO`**, run **E / E.2 probes** (`gh …` **must** include **`-L 1`** on issue/PR list so `jq 'length'` is only **0** or **1**; **`--repo "$REPO"`**) **before** mirror; then **mirror + worktree**; then **create** / **idle** / **work** per **`HEARTBEAT.md`** **Routing law** and **Section F preflight** before any `gh issue create`.
 
 ## Startup order (every session / HEARTBEAT)
 

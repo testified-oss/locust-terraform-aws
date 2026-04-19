@@ -7,7 +7,7 @@ Each HEARTBEAT run processes **exactly one** repository, chosen **uniformly at r
 | URL | owner/name |
 |-----|------------|
 | https://github.com/testified-oss/behave-bdd-python | `testified-oss/behave-bdd-python` |
-| https://github.com/testified-oss/awesome-testing-resources | `testified-oss/awesome-testing-resources` |
+<!-- | https://github.com/testified-oss/awesome-testing-resources | `testified-oss/awesome-testing-resources` | -->
 
 ## Random selection (required)
 
@@ -25,3 +25,4 @@ Log the chosen repo in **`memory/YYYY-MM-DD.md`** (e.g. `picked_repo=testified-o
 
 - **No** `gh repo list` for scope—the pool is **only** these two rows unless a human edits this file.
 - **Git worktrees skill** applies **before** any `git worktree` / mirror work: **`/Users/luucrew/.claude/skills/using-git-worktrees/SKILL.md`**.
+- You must already check previous memory so we dont repeat work in same repository

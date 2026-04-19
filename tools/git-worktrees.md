@@ -2,7 +2,7 @@
 
 ## Mandatory skill (all outcomes)
 
-**Every** HEARTBEAT run—**create**, **idle** (open issues + open PRs), or **work on an existing issue**—needs a **local clone via mirror + worktree** on disk before relying on local file reads. Do not rely on `gh` alone to “read” the repo for triage or issue bodies.
+**Every** HEARTBEAT run—**create**, **idle** (open issues + open PRs), or **work on an existing issue**—runs **`HEARTBEAT.md` Sections E / E.2** first ( **`gh` probes only**), then needs a **local clone via mirror + worktree** on disk (**Section D**) before local file reads for scan/implement. Do not rely on `gh` alone to “read” the repo for triage or issue bodies.
 
 Before any `git worktree` / mirror layout change, read and apply:
 
@@ -54,7 +54,11 @@ From the same mirror, add a second worktree **or** reuse after remove—never tw
 git -C "git/mirrors/OWNER__REPO.git" worktree add -b "feat/issue-${N}-triage" "../wt/OWNER__REPO-issue-${N}" "$BR"
 ```
 
-(Adjust branch prefix per **`tools/conventions.md`**.) Implement, commit with conventional messages, then `gh pr create --draft` if appropriate.
+(Adjust branch prefix per **`tools/conventions.md`**.) Implement, commit with conventional messages, then push + `gh pr create --draft` per **`tools/github-prs.md`** (mirror remotes block plain `git push origin <branch>` — use the **URL push** recipe there).
+
+## Push caveat (`clone --mirror`)
+
+Bare mirrors record **`remote.origin.mirror=true`**. Linked worktrees reuse that config, so **`git push origin <topic-branch>`** can fail with **`fatal: --mirror can't be combined with refspecs`**. That is **not** a mysterious “environment” limit — use the explicit **`https://github.com/${REPO}.git`** push form in **`tools/github-prs.md`** before **`gh pr create`**.
 
 ## After run
 

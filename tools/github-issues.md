@@ -2,12 +2,16 @@
 
 ## Per-HEARTBEAT flow (summary)
 
-1. **Random repo** — exactly one of the two repos in **`tools/target-repos.md`** (see that file for `shuf` recipe).
-2. **Local copy always** — mirror + **at least one worktree** on the default branch per **`tools/git-worktrees.md`** and the **using-git-worktrees** skill, **before** any issue create or “work on issue” triage.
-3. **Branch on open issues + open PRs** (see **`HEARTBEAT.md`** **Routing law** / **Section E.2**):
-   - If **`gh issue list --repo OWNER/REPO --state open … --jq 'length'`** is **0** → **create new issue** path (scan + dedupe + `gh issue create`).
-   - If **≥ 1** open issue **and** **`gh pr list --repo OWNER/REPO --state open … --jq 'length'` ≥ 1** → **idle** — **no** `gh issue create`, **no** commits, **no** new PR, **no** issue comment; log and teardown.
-   - If **≥ 1** open issue **and** **0** open PRs → **work on issue** path only (**no** `gh issue create`): pick an open issue, **`gh issue view`**, **second worktree** on a **topic branch** per **`tools/conventions.md`** / **`HEARTBEAT.md` Section G**, implement, **commit**, **`gh pr create --draft`** when there is at least one commit, then **`gh issue comment`** linking the PR—never merge without human approval.
+1. **Random repo** — exactly one of the two repos in **`tools/target-repos.md`** (see that file for `shuf` recipe). Set **`REPO="OWNER/REPO"`** and use **`--repo "$REPO"`** on every `gh` call (**`HEARTBEAT.md` Section C**).
+2. **Route gate first** — **`HEARTBEAT.md` Section E / E.2** *before* mirror: use **existence probes** (`-L 1`, `jq 'length'` → **0** or **1**) for open issues and (if issues exist) open PRs. **Never** infer “no issues” without this probe.
+3. **Local copy always** — after routing, mirror + **at least one worktree** on the default branch per **`tools/git-worktrees.md`** and the **using-git-worktrees** skill (**`HEARTBEAT.md` Section D**), **before** `gh issue create` or implementation reads.
+4. **Branch on probes** (see **`HEARTBEAT.md` Routing law**):
+   - **`has_open_issues=0`** → **create** path after D: scan + dedupe + **`HEARTBEAT.md` Section F preflight** + `gh issue create`.
+   - **`has_open_issues≠0`** and **`has_open_prs≠0`** → **idle** after D — **no** `gh issue create`, **no** commits, **no** new PR, **no** issue comment. (With **`-L 1`** probes, “≠0” is exactly **`1`**.)
+
+   - **`has_open_issues≠0`** and **`has_open_prs=0`** → **work on issue** after D — **no** `gh issue create`; pick an issue, **`gh issue view`**, **second worktree** on a **topic branch** per **`tools/conventions.md`** / **`HEARTBEAT.md` Section G**, implement, **commit**, **`gh pr create --draft`** when there is at least one commit, then **`gh issue comment`** linking the PR—never merge without human approval.
+
+**Anti-footgun:** **`gh issue list` / `gh pr list` must include `-L 1`** for these existence probes. Without it, `jq 'length'` is the **real** count (2, 3, …). Branching that only treats **`== 1`** as “has issues” then **skips** open‑PR checks and **`gh issue create`** fires by mistake.
 
 ## Config (edit for your org)
 
@@ -22,37 +26,37 @@
 | `issue_template_title` | `Bug report` | Template **`name:`** for **`gh issue create --template`** |
 | `max_issues_per_run` | `1` | Cap **new** issues created when the “no open issues” path runs |
 
-## Open issue count (branching)
+## Canonical probes (existence: 0 or 1)
+
+Use **`REPO`** from **`HEARTBEAT.md` Section C**. **`-L 1`** matters: you are asking “is there **at least one**?”, not “how many total?” (avoids default `--limit` / pagination confusion).
 
 ```bash
-gh issue list --repo "OWNER/REPO" --state open --json number --jq 'length'
+has_open_issues=$(gh issue list --repo "$REPO" --state open -L 1 --json number --jq 'length')
+has_open_prs=$(gh pr list --repo "$REPO" --state open -L 1 --json number --jq 'length')
 ```
 
-## Open PR count (when open issues ≥ 1)
+- **`has_open_issues`:** **`0`** = no open issues; **`1`** (with **`-L 1`**) = one or more open issues. If you omitted **`-L 1`**, normalize: **any value `> 0`** means “has open issues” (same as **`1`** in the routing table).
+- **`has_open_prs`:** only interpret when **`has_open_issues` is not `0`** — **`0`** = work-on-issue path; **non‑zero** = idle path (with **`-L 1`**, non‑zero is exactly **`1`**).
 
-```bash
-gh pr list --repo "OWNER/REPO" --state open --json number --jq 'length'
-```
-
-If this is **≥ 1** while open issues are **≥ 1**, use the **idle** path (**`HEARTBEAT.md` Section E.2**): do nothing on the repo.
+Log both variables and the exact commands to **`memory/YYYY-MM-DD.md`** every run.
 
 ## Create path (no open issues)
 
 1. Scan files per **`tools/scan-paths.md`** inside the **default-branch worktree** (local copy required).
-2. Dedupe: `gh issue list --repo "OWNER/REPO" --state all --search "<keywords>" --limit 20` if you need to avoid reopening closed dupes.
+2. Dedupe: `gh issue list --repo "$REPO" --state all --search "<keywords>" -L 20` if you need to avoid reopening closed dupes.
 3. `gh issue create` as below.
 
-## Work-on-issue path (one or more open issues **and zero open PRs**)
+## Work-on-issue path (`has_open_issues` **≠ 0** and **`has_open_prs=0`**)
 
-**Precondition:** **`gh pr list --repo "OWNER/REPO" --state open --json number --jq 'length'`** must be **0**. Otherwise **idle**, not this section.
+**Precondition:** **`has_open_prs`** from the probe above must be **`0`**. Otherwise **idle**, not this section.
 
-1. List: `gh issue list --repo "OWNER/REPO" --state open --json number,title,labels --limit 30`
+1. List: `gh issue list --repo "$REPO" --state open --json number,title,labels -L 30`
 2. **Pick one** issue `N` (document choice in memory).
-3. **`gh issue view N --repo "OWNER/REPO"`** (web or `--json` as needed).
+3. **`gh issue view N --repo "$REPO"`** (web or `--json` as needed).
 4. **Topic-branch worktree:** `git worktree add` a second path from the mirror when needed (governed by **using-git-worktrees**). Read relevant paths and **implement** a smallest coherent change for issue `N`; branch naming per **`tools/conventions.md`**.
 5. **Commit** on the topic branch (messages per **`tools/conventions.md`**).
 6. **`gh pr create --draft`** when there is at least one commit — see **`tools/github-prs.md`** and **`HEARTBEAT.md` Section G**.
-7. **`gh issue comment N --repo "OWNER/REPO" --body-file scratch/comment-N.md`** — required: concrete repo-relative paths, summary, and **draft PR link** when step 6 ran. If no commits were possible, explain in the comment; still **do not** `gh issue create` while other issues are open.
+7. **`gh issue comment N --repo "$REPO" --body-file scratch/comment-N.md`** — required: concrete repo-relative paths, summary, and **draft PR link** when step 6 ran. If no commits were possible, explain in the comment; still **do not** `gh issue create` while **`has_open_issues` is not `0`**.
 
 If **`gh issue create --template`** fails with “template not found”, **log and skip** create (no interactive prompt).
 
@@ -63,7 +67,7 @@ GitHub CLI may not support some YAML issue forms. If so: log to memory, use body
 ## Dedupe (before create)
 
 ```bash
-gh issue list --repo "OWNER/REPO" --state open --search "keywords here" --limit 20
+gh issue list --repo "$REPO" --state open --search "keywords here" -L 20
 ```
 
 If a substantively duplicate **open** issue exists, **do not** create another.
@@ -72,7 +76,7 @@ If a substantively duplicate **open** issue exists, **do not** create another.
 
 ```bash
 gh issue create \
-  --repo "OWNER/REPO" \
+  --repo "$REPO" \
   --title "short imperative title" \
   --template "ISSUE_TEMPLATE_NAME_FROM_TOOLS" \
   --body-file "/Users/luucrew/.openclaw/workspaces/testified-oss-coder/scratch/issue-body-OWNER-REPO.md"
@@ -83,7 +87,7 @@ Replace `ISSUE_TEMPLATE_NAME_FROM_TOOLS` with **`issue_template_title`** above.
 Fallback (body-only), only if operators document approval in this file:
 
 ```bash
-gh issue create --repo "OWNER/REPO" --title "..." --body-file "..."
+gh issue create --repo "$REPO" --title "..." --body-file "..."
 ```
 
 ## Scratch files
