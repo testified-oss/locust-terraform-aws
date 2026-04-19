@@ -1,16 +1,13 @@
 # Scan paths (relative to repo root)
 
-After a worktree is checked out, read these paths **in order** when they exist (skip missing files without failing the repo).
+After a worktree is checked out, Analyse contents **in order** when they exist (skip missing files without failing the repo).
 
-1. `README.md`
-2. `CONTRIBUTING.md`
-3. `SECURITY.md`
-4. `TODO.md` — or `ROADMAP.md` if `TODO.md` missing
-5. `package.json` — if present (scripts, engines)
-6. `go.mod` — if present
-7. `Cargo.toml` — if present
-8. `.github/workflows/` — list filenames only first pass; optional second pass: read selected YAML if small
+1. `README.md` for project details, execution examples
+2. project directory path and files
+
 
 ## Output expectation
 
-Summarize: docs gaps, CI surface, dependency or test hints, security disclaimers—**actionable** bullets suitable for an issue body, with paths cited.
+Summarize: security, bugs, gaps, CI surface, dependency or test hints, security disclaimers—**actionable** bullets suitable for an issue body, with paths cited.
+
+if none of above the analysis project to understand purpose of repo and create new issue with improvement suggestion for next.

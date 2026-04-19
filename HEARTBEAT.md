@@ -1,27 +1,44 @@
-# HEARTBEAT.md — Testified-OSS improvement (mirrors + worktrees + issues)
+# HEARTBEAT.md — Testified-OSS improvement (random repo + worktrees + issues)
 
 **Workspace root:** `/Users/luucrew/.openclaw/workspaces/testified-oss-coder`
 
-**Git layout:** Announce and apply the **using-git-worktrees** skill — **`/Users/luucrew/.claude/skills/using-git-worktrees/SKILL.md`** — for directory choice, `git check-ignore`, and worktree lifecycle. That skill **governs layout and safety** for all `git worktree` operations.
+Gateway and cron must read **exactly**:
 
-**Cron registry (operators):** `/Users/luucrew/.openclaw/cron/jobs.json` — job for `agentId` `testified-oss-coder` when enabled.
+`/Users/luucrew/.openclaw/workspaces/testified-oss-coder/HEARTBEAT.md`
+
+**Git / local copy:** **Always** use a **bare mirror + worktree** for the chosen repo before reading files, filing a new issue, or working an open issue. Announce and follow the **using-git-worktrees** skill: **`/Users/luucrew/.claude/skills/using-git-worktrees/SKILL.md`** — it **governs layout and safety** for every `git worktree` operation (both “create issue” and “work on issue” paths).
+
+**Cron:** `/Users/luucrew/.openclaw/cron/jobs.json` — job `testified-oss-coder`.
+
+---
+
+## Routing law (read before Sections E–G)
+
+| Open issues | Open PRs (`gh pr list … --state open` count) | Path this run |
+|-------------|-----------------------------------------------|----------------|
+| **0** | *(any)* | **Section F** — scan, dedupe, `gh issue create` at most **`max_issues_per_run`**. |
+| **≥ 1** | **≥ 1** | **Idle** — **Section E.2** then **Section H** only: **no** Section F, **no** Section G (no new issue, no new commits, no new PR, no issue comment). Human/review work is already in flight. |
+| **≥ 1** | **0** | **Section G** only — topic-branch worktree, **commit(s)**, **`gh pr create --draft`**, **`gh issue comment`** with PR link. |
+
+**Forbidden:** **`gh issue create`** whenever open-issue count is **≥ 1**. If you already created an issue by mistake, stop; follow **Section G** or **Idle** per the table.
+
+Re-check the open-issue count **immediately before** `gh issue create` (Section F). If it is no longer 0, **abort Section F** and re-apply this table (G vs Idle via **Section E.2**).
 
 ---
 
 ## When you are done
 
-After **Sections A–H**: you loaded playbooks, authenticated, processed the **repo slice**, updated memory / optional cursor, and your **final assistant message** is the **full run summary** (repos touched, issues created or skipped, errors). When cron **`announce`** applies, that summary is posted to Discord channel **`1069257061533233182`** (same pattern as `dependabot` / `remote-jobs-test`).
+After **Sections A–I**: playbooks loaded, auth OK, **one random repo** selected, **mirror + worktree** used, outcome **one of**: **new issue created** (open issues were 0), **open issue worked** (Section G: open PRs were 0), or **idle** (open issues **and** open PRs both non-zero — no repo writes beyond memory/teardown), teardown + memory written, and your **final assistant message** is the **full run summary** for Discord **`1069257061533233182`** when cron **`announce`** applies.
 
-Do **not** end the turn with only `HEARTBEAT_OK` or any single-line token.
+Do **not** end with only `HEARTBEAT_OK` or any token-only line.
 
 ---
 
 ## Section A — Read index + playbooks
 
-1. Open **`TOOLS.md`** (index) and confirm startup order.
-2. Read **`tools/conventions.md`**, **`tools/target-repos.md`**, **`tools/git-worktrees.md`**, **`tools/github-issues.md`**, **`tools/scan-paths.md`**.
-3. Extract from **`tools/github-issues.md`**: `issue_template_title`, `repos_per_run`, `max_issues_per_run`, dedupe limits.
-4. Build the **allowlist** from **`tools/target-repos.md`** — skip placeholder rows like `testified-oss/REPLACE_ME` until replaced with real `owner/name`.
+1. **`TOOLS.md`** — confirm startup order.
+2. **`tools/conventions.md`**, **`tools/target-repos.md`**, **`tools/git-worktrees.md`**, **`tools/github-issues.md`**, **`tools/scan-paths.md`**.
+3. Extract **`issue_template_title`**, **`max_issues_per_run`**, and the **two-repo random pool** from `target-repos.md` / `github-issues.md`.
 
 ## Section B — Auth
 
@@ -31,78 +48,71 @@ gh auth status
 
 On failure: log to `memory/YYYY-MM-DD.md` and stop.
 
-## Section C — Select repo slice
+## Section C — Random repo (exactly one)
 
-1. Read optional **`memory/repo-cursor.json`** (`nextIndex`, integer). If missing, use `0`.
-2. Take **`repos_per_run`** consecutive repos from the allowlist starting at `nextIndex` (wrap at end of list).
-3. If allowlist has no valid repos, append note to memory, jump to **Section H** with summary “no valid repos configured”.
+Pick **`OWNER/REPO`** for this run **uniformly at random** from the two entries in **`tools/target-repos.md`** (use the `shuf` recipe there). Log `picked_repo=…` to **`memory/YYYY-MM-DD.md`**.
 
-## Section D — Mirror + worktree per repo
+## Section D — Mirror + default-branch worktree (always)
 
-For each `OWNER/REPO` in the slice:
+For the chosen `OWNER/REPO` only:
 
-1. Read **using-git-worktrees** skill; verify worktree parent is ignored (`git check-ignore` per **`tools/git-worktrees.md`**).
-2. Ensure mirror exists at `git/mirrors/OWNER__REPO.git`; if not, `git clone --mirror` (or `gh repo clone OWNER/REPO git/tmp -- --mirror` then move — prefer documented commands in **`tools/git-worktrees.md`**).
-3. `git -C git/mirrors/OWNER__REPO.git fetch --prune`
-4. Resolve default branch: `gh repo view "OWNER/REPO" --json defaultBranchRef -q .defaultBranchRef.name`
-5. `git worktree add` to `git/wt/OWNER__REPO-<branch>-scan` (see **`tools/git-worktrees.md`**).
-6. **Optional:** if `HEAD` SHA matches last recorded SHA in memory for this repo, skip file read (optimization).
-7. Read files per **`tools/scan-paths.md`**; produce a short internal summary of candidate improvements.
+1. Re-read **using-git-worktrees** skill; **`git check-ignore`** on worktree root per **`tools/git-worktrees.md`**.
+2. Ensure **`git/mirrors/OWNER__REPO.git`** exists; `fetch --prune`.
+3. Resolve default branch: `gh repo view "OWNER/REPO" --json defaultBranchRef -q .defaultBranchRef.name`
+4. **`git worktree add`** to **`git/wt/OWNER__REPO-<BR>-scan`** on that branch (see **`tools/git-worktrees.md`**).
+5. All file reads for triage/issue text use **this local tree**—not GitHub web alone.
 
-## Section E — Dedupe
-
-For each candidate issue topic, search open issues:
+## Section E — Open issues? (branching gate)
 
 ```bash
-gh issue list --repo "OWNER/REPO" --state open --search "<distinct keywords>" --limit 20
+gh issue list --repo "OWNER/REPO" --state open --json number --jq 'length'
 ```
 
-If duplicate likely exists, **do not** create.
+Record `open_issue_count=…` in **`memory/YYYY-MM-DD.md`**.
 
-## Section F — `gh issue create` (exact contract)
+- If **0** → **only** **Section F**. Do **not** run Section E.2 or Section G.
+- If **≥ 1** → go to **Section E.2** (do **not** run Section F until E.2 says idle is ruled out).
 
-Use flags exactly as documented in **`tools/github-issues.md`**. In short:
+### Section E.2 — Open PRs? (only when `open_issue_count >= 1`)
 
 ```bash
-gh issue create \
-  --repo "OWNER/REPO" \
-  --title "<imperative title>" \
-  --template "<issue_template_title from tools/github-issues.md>" \
-  --body-file "/Users/luucrew/.openclaw/workspaces/testified-oss-coder/scratch/issue-body-OWNER-REPO.md"
+gh pr list --repo "OWNER/REPO" --state open --json number --jq 'length'
 ```
 
-- Write the body file under **`scratch/`** first (multi-line, citations to paths).
-- If `--template` fails (template not found or unsupported form): **log, skip create** for that item; continue.
-- Enforce **`max_issues_per_run`** across the whole run.
-- Suggested commit lines in the body **must** follow **`tools/conventions.md`**.
+Record `open_pr_count=…` in **`memory/YYYY-MM-DD.md`**.
 
-**Operator:** verify **`issue_template_title`** matches a template **`name:`** on at least one allowlisted repo before relying on automation.
+- If **`open_pr_count >= 1`** → **Idle path**: **no** Section F, **no** Section G. Log `run_path=idle_open_issues_and_open_prs`. Jump to **Section H**.
+- If **`open_pr_count == 0`** → **only** **Section G**. **No** Section F — **no** `gh issue create` this run (see **Routing law**).
 
----
+## Section F — Create new issue (**only** when `open_issue_count == 0`)
 
-## Section G — Teardown + memory
+**Precondition:** Re-run the Section E command; if count is **not** 0, **stop** — apply **Routing law** (E.2 then G or Idle, never create while open issues exist).
 
-1. `git worktree remove` for each worktree created this run (keep mirrors).
-2. Append audit lines to **`memory/YYYY-MM-DD.md`**: repos, SHAs, issues filed or skipped, template errors.
-3. Update **`memory/repo-cursor.json`** `{ "nextIndex": <old + slice length mod n> }` if using rotation.
+1. Read paths in **`tools/scan-paths.md`** under the **scan worktree**.
+2. **Dedupe** per **`tools/github-issues.md`** if needed (including search for open dupes before create).
+3. **`gh issue create`** with **`--repo`**, **`--title`**, **`--template`** = `issue_template_title`, **`--body-file`** under **`scratch/`** — exact contract in **`tools/github-issues.md`**. Respect **`max_issues_per_run`**.
+4. Suggested commit lines in the body must match **`tools/conventions.md`**.
+5. If `--template` fails: log, skip create.
 
----
+## Section G — Work on existing issue (`open_issue_count >= 1` **and** `open_pr_count == 0`)
 
-## Section H — Final message (Discord / operator)
+**Precondition:** **Section E.2** must have recorded **`open_pr_count == 0`**. If any open PR exists, you should be on the **Idle** path instead.
 
-Emit a **full run summary**: allowlist slice, repos processed, file scan highlights, issue URLs created, dedupe/template skips, errors. This text is what cron **`announce`** delivers to **`1069257061533233182`**.
+**Goal:** Land a **real change** from a **topic branch** in a **worktree**, **push** (or `gh` equivalent), open a **draft PR**, then **comment on the issue** with the PR link. **Do not** file a new issue on this path.
 
----
+1. `gh issue list --repo "OWNER/REPO" --state open --json number,title,labels --limit 30` — **pick one** issue `N` (prefer smallest `number` or `good first issue` when present); log `picked_issue=N` in memory.
+2. **`gh issue view N --repo "OWNER/REPO"`** (full context before edits).
+3. **Worktree + branch:** Use **`git worktree add -b <topic-branch> …`** from the **same mirror** for implementation work (second path is preferred over committing on the default-branch scan tree); naming in **`tools/conventions.md`** / **`tools/git-worktrees.md`**. The **using-git-worktrees** skill governs paths and safety.
+4. **Implement** in that worktree: smallest coherent fix or doc change that addresses `N` (or a clear slice of it). If upstream already fixed it, **one** commit that only adds a comment or doc note is still valid—avoid empty PRs.
+5. **Commit** — every message must match **`tools/conventions.md`** (conventional commits). Prefer PR body/footer **`Fixes #N`** when the change closes the issue; otherwise reference `#N` in the PR body.
+6. **`gh pr create --draft`** per **`tools/github-prs.md`** — **required** when there is at least one new commit (push branch first if your flow needs it); no merge without human. If there are **zero** commits, skip PR creation and explain in the comment (step 7).
+7. **`gh issue comment N --repo "OWNER/REPO" --body-file scratch/comment-N.md`** — **required** last: summarize what changed (or why nothing could ship), repo-relative paths, and **link the draft PR** when step 6 ran (number/URL from `gh pr create`). If step 6 was skipped, say so explicitly. **Never** call `gh issue create` on this path while the repo still has open issues.
 
-## Run summary (this week)
+## Section H — Teardown + memory
 
-- **Allowlist:** tools/target-repos.md contains 1 placeholder entry (`testified-oss/REPLACE_ME`). No processing occurred.
-- **Mirrors:** none created.
-- **Worktrees:** none created.
-- **Scans:** none performed.
-- **Issues created:** 0
-- **Deduplication/skips:** not applicable
-- **Errors/warnings:** Allowlist placeholder present — update with real repo(s) to enable weekly processing.
-- **Next cursor:** unchanged (0)
+1. **`git worktree remove --force`** for every worktree path created this run (scan + issue branch if any). Keep mirrors.
+2. Append **`memory/YYYY-MM-DD.md`**: picked repo, path taken (**create** / **work-on-issue** / **idle**), `open_issue_count`, `open_pr_count`, issue URLs, PR URL if any, errors.
 
-This summary will be announced to Discord channel **1069257061533233182** via cron.
+## Section I — Final message (Discord / operator)
+
+Full summary: **which repo** (random), **create vs work-on-issue vs idle** (if idle: say open issues **and** open PRs were both non-zero), worktree paths used, files touched, issue/PR links, skips/errors. This is the **`announce`** payload to **`1069257061533233182`**.

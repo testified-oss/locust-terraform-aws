@@ -4,17 +4,17 @@
 
 ## Mission (one line)
 
-Improve **allowlisted** `testified-oss` repos by scanning checked-out sources (mirrors + worktrees), deduping open issues, and filing **`gh issue create`** issues using the org playbook—**never** inventing work that already has an open issue.
+Each HEARTBEAT: **randomly choose one** of [behave-bdd-python](https://github.com/testified-oss/behave-bdd-python) or [awesome-testing-resources](https://github.com/testified-oss/awesome-testing-resources); **always** use **mirror + worktree** (using-git-worktrees skill); if **no open issues** → create a new issue from local scan; if **open issues and open PRs** → **idle** (no repo writes); if **open issues and no open PRs** → **work on one** issue (draft PR + comment). See **`HEARTBEAT.md`** **Routing law**.
 
 ## Startup order (every session / HEARTBEAT)
 
 1. `SOUL.md`
 2. `USER.md`
-3. **`tools/conventions.md`** — commits, branches, PR rules (red line for any git write)
-4. **`tools/target-repos.md`** — which `owner/name` repos exist this cycle
-5. **`tools/git-worktrees.md`** — paths, mirror/worktree commands, **using-git-worktrees** skill
-6. Task playbook for this run (v1 issues): **`tools/github-issues.md`**
-7. **`tools/scan-paths.md`** — relative paths to read inside each worktree
+3. **`tools/conventions.md`**
+4. **`tools/target-repos.md`** — two-repo pool + `shuf` random pick
+5. **`tools/git-worktrees.md`** — **mandatory** local copy for both paths
+6. **`tools/github-issues.md`** — branch on open issues + open PRs; create vs idle vs work-on-issue
+7. **`tools/scan-paths.md`**
 8. `AGENTS.md`
 9. `HEARTBEAT.md`
 
@@ -22,17 +22,17 @@ Improve **allowlisted** `testified-oss` repos by scanning checked-out sources (m
 
 | Playbook | Role |
 |----------|------|
-| [`tools/conventions.md`](tools/conventions.md) | Conventional commits, branch/PR naming, org rules |
-| [`tools/target-repos.md`](tools/target-repos.md) | Allowlist of repos to improve |
-| [`tools/git-worktrees.md`](tools/git-worktrees.md) | Mirror layout, worktree add/remove, skill link |
-| [`tools/github-issues.md`](tools/github-issues.md) | Template title, dedupe, **`gh issue create`** flags |
-| [`tools/github-prs.md`](tools/github-prs.md) | Stub for future PR automation (links conventions) |
-| [`tools/github-discussions.md`](tools/github-discussions.md) | Stub for discussions / API |
-| [`tools/scan-paths.md`](tools/scan-paths.md) | Files to read per repo after checkout |
+| [`tools/conventions.md`](tools/conventions.md) | Commits, branches, PR rules |
+| [`tools/target-repos.md`](tools/target-repos.md) | Two repos + **random** selection recipe |
+| [`tools/git-worktrees.md`](tools/git-worktrees.md) | Mirror/worktree; **both** scenarios |
+| [`tools/github-issues.md`](tools/github-issues.md) | Open-issue + open-PR check; create vs idle vs work-on-issue; `gh` flags |
+| [`tools/github-prs.md`](tools/github-prs.md) | Draft PR stub when working issues |
+| [`tools/github-discussions.md`](tools/github-discussions.md) | Discussions stub |
+| [`tools/scan-paths.md`](tools/scan-paths.md) | Files to read in the worktree |
 
 ## Operator registry
 
 | Key | Where |
 |-----|--------|
-| Cron job definition | `/Users/luucrew/.openclaw/cron/jobs.json` |
-| Agent id | `testified-oss-coder` in `/Users/luucrew/.openclaw/openclaw.json` |
+| Cron | `/Users/luucrew/.openclaw/cron/jobs.json` |
+| Agent | `testified-oss-coder` in `/Users/luucrew/.openclaw/openclaw.json` |

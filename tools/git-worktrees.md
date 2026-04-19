@@ -1,8 +1,10 @@
 # Git mirrors + worktrees
 
-## Mandatory skill
+## Mandatory skill (all outcomes)
 
-Before creating or removing worktrees, read and follow:
+**Every** HEARTBEAT run—**create**, **idle** (open issues + open PRs), or **work on an existing issue**—needs a **local clone via mirror + worktree** on disk before relying on local file reads. Do not rely on `gh` alone to “read” the repo for triage or issue bodies.
+
+Before any `git worktree` / mirror layout change, read and apply:
 
 **`/Users/luucrew/.claude/skills/using-git-worktrees/SKILL.md`**
 
@@ -13,11 +15,11 @@ Announce when applying it: *using-git-worktrees skill governs layout and safety.
 | Path | Purpose |
 |------|---------|
 | `git/mirrors/<owner>__<repo>.git` | Bare mirror (`git clone --mirror`) |
-| `git/wt/<owner>__<repo>-<branch-slug>` | Ephemeral read checkout via `git worktree add` |
+| `git/wt/<owner>__<repo>-<purpose>` | Ephemeral checkout: `scan` on default branch, or `issue-N` for work-on-issue branches |
 
-**Workspace root:** `/Users/luucrew/.openclaw/workspaces/testified-oss-coder`
+**Workspace root:** `/Users/luucrew/.openclaw/workspaces/testified-oss-coder/codespaces/`
 
-Set **`worktrees_root`** in practice to either `git/wt` or top-level `worktrees/` — both are **gitignored** (see root `.gitignore`).
+Worktree parents must be **gitignored** (see root `.gitignore`).
 
 ## Safety
 
@@ -25,48 +27,39 @@ Set **`worktrees_root`** in practice to either `git/wt` or top-level `worktrees/
 git check-ignore -q git/wt 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
 ```
 
-If not ignored, fix workspace `.gitignore` before first `worktree add`.
+If not ignored, fix `.gitignore` before first `worktree add`.
 
 ## Mirror lifecycle
-
-**First time** (HTTPS; `gh` auth is used by the host for `gh repo clone` if preferred):
 
 ```bash
 mkdir -p git/mirrors
 git clone --mirror "https://github.com/OWNER/REPO.git" "git/mirrors/OWNER__REPO.git"
-```
-
-**Update:**
-
-```bash
 git -C "git/mirrors/OWNER__REPO.git" fetch --prune
 ```
 
-## Worktree (read-only scan)
-
-Resolve default branch (example with `gh`):
+## Worktree — default branch (scan / create-issue path)
 
 ```bash
-gh repo view "OWNER/REPO" --json defaultBranchRef -q .defaultBranchRef.name
-```
-
-Let `BR` be that branch name. Unique path per run:
-
-```bash
-WT="git/wt/OWNER__REPO-${BR}-scan"
+BR=$(gh repo view "OWNER/REPO" --json defaultBranchRef -q .defaultBranchRef.name)
 git -C "git/mirrors/OWNER__REPO.git" worktree add "../wt/OWNER__REPO-${BR}-scan" "$BR"
 ```
 
-(Adjust relative path from mirror: from `git/mirrors/OWNER__REPO.git`, `../wt/...` resolves to `git/wt/...`.)
+Paths are relative to the mirror directory (`git/mirrors/`), so the checkout lands under **`git/wt/`**.
 
-## After scan
+## Worktree — topic branch (work-on-issue path)
+
+From the same mirror, add a second worktree **or** reuse after remove—never two checkouts of the same branch path:
 
 ```bash
-git worktree remove --force "git/wt/OWNER__REPO-${BR}-scan"
+git -C "git/mirrors/OWNER__REPO.git" worktree add -b "feat/issue-${N}-triage" "../wt/OWNER__REPO-issue-${N}" "$BR"
 ```
 
-Keep the **mirror**; remove only the worktree.
+(Adjust branch prefix per **`tools/conventions.md`**.) Implement, commit with conventional messages, then `gh pr create --draft` if appropriate.
 
-## Failure
+## After run
 
-If `worktree add` fails (path exists, lock, etc.), log to `memory/YYYY-MM-DD.md`, `git worktree prune` in the mirror if needed, and continue to the next repo.
+```bash
+git worktree remove --force "git/wt/<path-used>"
+```
+
+Keep **mirrors**; remove **all** worktrees created this run.

@@ -1,6 +1,6 @@
 # GitHub — PRs (stub)
 
-Future: open improvement PRs from a dedicated branch in a worktree (same mirror layout as [`git-worktrees.md`](git-worktrees.md)).
+When **working an open issue** (`tools/github-issues.md`, **`HEARTBEAT.md` Section G**), open a **draft** PR from the topic branch when there is at least one commit (typically from a **second worktree**; same mirror layout as [`git-worktrees.md`](git-worktrees.md)). If **`gh pr list --state open`** is non-zero while open issues exist, you are on the **idle** path (**`HEARTBEAT.md` Section E.2**) — **do not** create another PR this run.
 
 ## Rules (do not duplicate)
 
