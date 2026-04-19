@@ -8,7 +8,7 @@ If **`has_open_prs` is not `0`** while executing **Section G** (work-on-issue) s
 
 ## Rules (do not duplicate)
 
-- Branch names: see [`conventions.md`](conventions.md).
+- Branch and PR title names: see [`conventions.md`](conventions.md).
 - **Every** commit message and PR title: [`conventions.md`](conventions.md) only.
 
 ## Commands (reference)
